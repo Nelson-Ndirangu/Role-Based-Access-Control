@@ -1,58 +1,62 @@
-// Auth Logic
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const register = async (req, res) => {
   const { username, password, role } = req.body;
+
   try {
-    // If details are missing
     if (!username || !password || !role) {
-      return res.status(400).json({ message: "Missing Credentials" });
+      return res.status(400).json({ message: "Missing credentials" });
     }
-    // Hashing password
-    const hashedpassword = await bcrypt.hash(password, 10);
-    // Create a new user
-    const newUser = new User.create({
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
       username,
-      password: hashedpassword,
+      password: hashedPassword,
       role,
     });
-    await newUser.save();
-    res.status(201).json({ message: `User ${username} has been created` });
+
+    res.status(201).json({ message: `User "${username}" created successfully` });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 const login = async (req, res) => {
   const { username, password } = req.body;
+
   try {
     if (!username || !password) {
-      return res.status(400).json({ message: "Enter the missing credentials" });
-    }
-    // find if the user exist in the database
-    const ifUser = await User.findOne({ username });
-    if (!ifUser) {
-      res.status(404).json({ message: `User "${username}" does not exist` });
-    }
-    const passwordMatch = await bcrypt.compare(password, User.password);
-    if (!passwordMatch) {
-      res.status(400).json({ message: "Wrong Password" });
+      return res.status(400).json({ message: "Missing credentials" });
     }
 
-    // Generate a token
+    const ifUser = await User.findOne({ username });
+    if (!ifUser) {
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, ifUser.password);
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Wrong password" });
+    }
+
     const token = jwt.sign(
-      { user: user._id, role: user.role },
+      { id: ifUser._id, role: ifUser.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1hr" }
+      { expiresIn: "1h" }
     );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+    });
   } catch (error) {
-    res.status(500).json({message: message.error})
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
-module.exports= {
-    register,
-    login
-}
+module.exports = { register, login };

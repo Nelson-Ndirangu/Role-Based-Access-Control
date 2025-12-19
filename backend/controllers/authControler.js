@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// Register a new user
 const register = async (req, res) => {
   const { username, password, role } = req.body;
 
@@ -18,13 +19,16 @@ const register = async (req, res) => {
       role,
     });
 
-    res.status(201).json({ message: `User "${username}" created successfully` });
+    res
+      .status(201)
+      .json({ message: `User "${username}" created successfully` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+// Login an existing user
 const login = async (req, res) => {
   const { username, password } = req.body;
 
